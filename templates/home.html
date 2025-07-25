@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Choose Appliance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="brand-header">
+        <h1 class="logo">Smart<span class="highlight">Pick</span></h1>
+    </header>
+    <h1>Select an Appliance</h1>
+    <div id="appliance-container" class="card-grid"></div>
+
+    <div id="product-filters" style="display: none; margin-top: 30px;">
+        <h2>Filter Products</h2>
+        <label for="brand">Brand:</label>
+        <input type="text" id="brand" placeholder="e.g. LG, Samsung" />
+
+        <label for="sort">Sort by Price:</label>
+        <select id="sort">
+            <option value="">None</option>
+            <option value="asc">Low to High</option>
+            <option value="desc">High to Low</option>
+        </select>
+
+        <button onclick="fetchProducts()">Apply</button>
+    </div>
+
+    <div id="product-container" class="card-grid" style="margin-top: 20px;"></div>
+
+    <div id="pagination" style="margin-top: 20px; display: none;">
+        <button onclick="prevPage()">Previous</button>
+        <span id="page-number">Page: 1</span>
+        <button onclick="nextPage()">Next</button>
+    </div>
+
+    <script>
+        let selectedAppliance = null;
+        let currentPage = 1;
+
+        window.onload = async () => {
+            const response = await fetch('https://shubhendu-ghosh-pickengine.hf.space/appliances');
+            const appliances = await response.json();
+
+            const container = document.getElementById('appliance-container');
+            appliances.forEach(appliance => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <img src="${appliance.image}" alt="${appliance.name}" />
+                    <p>${appliance.name}</p>
+                `;
+                div.onclick = () => {
+                    selectedAppliance = appliance.name;
+                    currentPage = 1;
+                    document.getElementById('product-filters').style.display = 'block';
+                    document.getElementById('pagination').style.display = 'block';
+                    fetchProducts();
+                };
+                container.appendChild(div);
+            });
+        };
+
+        async function fetchProducts() {
+            if (!selectedAppliance) return;
+
+            const brand = document.getElementById('brand').value;
+            const sort = document.getElementById('sort').value;
+
+            let url = `https://shubhendu-ghosh-pickengine.hf.space/products/?appliance=${selectedAppliance}&page=${currentPage}`;
+            if (brand) url += `&brand=${brand}`;
+            if (sort) url += `&sort=${sort}`;
+
+            const response = await fetch(url);
+            const products = await response.json();
+
+            const container = document.getElementById('product-container');
+            container.innerHTML = '';
+
+            products.forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <img src="${product.image}" alt="${product.name}" />
+                    <p><strong>${product.name}</strong></p>
+                    <p>₹${product.actual_price}</p>
+                    <p>⭐ ${product.ratings ? product.ratings + ' out of 5' : 'N/A'}</p>
+                `;
+                div.onclick = () => {
+                    window.location.href = `/product?product_id=${product._id}&appliance=${selectedAppliance}`;
+                };
+                container.appendChild(div);
+            });
+
+            document.getElementById('page-number').textContent = `Page: ${currentPage}`;
+        }
+
+        function nextPage() {
+            currentPage++;
+            fetchProducts();
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchProducts();
+            }
+        }
+    </script>
+</body>
+</html>
