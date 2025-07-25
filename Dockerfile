@@ -1,4 +1,4 @@
-# Use an official Python base image
+# Use official lightweight Python image
 FROM python:3.10-slim
 
 # Set environment variables
@@ -8,15 +8,16 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory
 WORKDIR /app
 
-# Copy application code
+# Copy requirements first and install dependencies
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy the rest of the application
 COPY . /app
 
-# Install dependencies
-RUN pip install --upgrade pip \
-    && pip install flask
-
-# Expose the port used by the app
+# Expose the port for HF Spaces
 EXPOSE 7860
 
-# Command to run the app
+# Run the app
 CMD ["python", "app/app.py"]
+
