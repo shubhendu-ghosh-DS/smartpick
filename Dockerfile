@@ -19,4 +19,4 @@ RUN pip install --upgrade pip \
 EXPOSE 7860
 
 # Command to run the app
-CMD ["python", "app.py"]
+CMD ["python", "app/app.py"]
